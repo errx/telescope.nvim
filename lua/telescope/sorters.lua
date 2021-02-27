@@ -450,6 +450,7 @@ sorters.get_substr_matcher = function()
   return Sorter:new {
     highlighter = substr_highlighter,
     scoring_function = function(_, prompt, _, entry)
+
     local display = entry.ordinal:lower()
 
     local search_terms = util.max_split(prompt, "%s")
@@ -462,7 +463,7 @@ sorters.get_substr_matcher = function()
       end
     end
 
-    return matched == total_search_terms and entry.index or -1
+    return matched == total_search_terms and entry.index or 0
     end
   }
 end

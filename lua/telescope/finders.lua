@@ -60,10 +60,12 @@ function JobFinder:_find(prompt, process_result, process_complete)
     self.job:shutdown()
   end
 
-  local on_output = function(_, line, _)
+  local on_output = function(x, line, y)
     if not line or line == "" then
       return
     end
+    print(vim.inspect(y))
+    print('-----')
 
     if self.entry_maker then
       line = self.entry_maker(line)
@@ -92,6 +94,7 @@ function JobFinder:_find(prompt, process_result, process_complete)
     writer = writer,
 
     enable_recording = false,
+    -- interactive = false,
 
     on_stdout = on_output,
     on_stderr = on_output,

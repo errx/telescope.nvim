@@ -27,6 +27,145 @@ local escape_chars = function(string)
   })
 end
 
+local valid_exts = {
+    ["agda"] = true,
+    ["aidl"] = true,
+    ["amake"] = true,
+    ["asciidoc"] = true,
+    ["asm"] = true,
+    ["avro"] = true,
+    ["awk"] = true,
+    ["bazel"] = true,
+    ["bitbake"] = true,
+    ["bzip2"] = true,
+    ["c"] = true,
+    ["cabal"] = true,
+    ["cbor"] = true,
+    ["ceylon"] = true,
+    ["clojure"] = true,
+    ["cmake"] = true,
+    ["coffeescript"] = true,
+    ["config"] = true,
+    ["cpp"] = true,
+    ["creole"] = true,
+    ["crystal"] = true,
+    ["cs"] = true,
+    ["csharp"] = true,
+    ["cshtml"] = true,
+    ["css"] = true,
+    ["csv"] = true,
+    ["cython"] = true,
+    ["d"] = true,
+    ["dart"] = true,
+    ["docker"] = true,
+    ["elisp"] = true,
+    ["elixir"] = true,
+    ["elm"] = true,
+    ["erlang"] = true,
+    ["fidl"] = true,
+    ["fish"] = true,
+    ["fortran"] = true,
+    ["fsharp"] = true,
+    ["gn"] = true,
+    ["go"] = true,
+    ["groovy"] = true,
+    ["gzip"] = true,
+    ["h"] = true,
+    ["haskell"] = true,
+    ["hbs"] = true,
+    ["hs"] = true,
+    ["html"] = true,
+    ["java"] = true,
+    ["jinja"] = true,
+    ["jl"] = true,
+    ["js"] = true,
+    ["json"] = true,
+    ["jsonl"] = true,
+    ["julia"] = true,
+    ["jupyter"] = true,
+    ["kotlin"] = true,
+    ["less"] = true,
+    ["license"] = true,
+    ["lisp"] = true,
+    ["log"] = true,
+    ["lua"] = true,
+    ["lz4"] = true,
+    ["lzma"] = true,
+    ["m4"] = true,
+    ["make"] = true,
+    ["man"] = true,
+    ["markdown"] = true,
+    ["matlab"] = true,
+    ["md"] = true,
+    ["mk"] = true,
+    ["ml"] = true,
+    ["msbuild"] = true,
+    ["nim"] = true,
+    ["nix"] = true,
+    ["objc"] = true,
+    ["objcpp"] = true,
+    ["ocaml"] = true,
+    ["org"] = true,
+    ["pdf"] = true,
+    ["perl"] = true,
+    ["php"] = true,
+    ["pod"] = true,
+    ["protobuf"] = true,
+    ["ps"] = true,
+    ["puppet"] = true,
+    ["purs"] = true,
+    ["py"] = true,
+    ["qmake"] = true,
+    ["r"] = true,
+    ["rdoc"] = true,
+    ["readme"] = true,
+    ["rst"] = true,
+    ["ruby"] = true,
+    ["rust"] = true,
+    ["sass"] = true,
+    ["scala"] = true,
+    ["sh"] = true,
+    ["smarty"] = true,
+    ["sml"] = true,
+    ["soy"] = true,
+    ["spark"] = true,
+    ["sql"] = true,
+    ["stylus"] = true,
+    ["sv"] = true,
+    ["svg"] = true,
+    ["swift"] = true,
+    ["swig"] = true,
+    ["systemd"] = true,
+    ["taskpaper"] = true,
+    ["tcl"] = true,
+    ["tex"] = true,
+    ["textile"] = true,
+    ["tf"] = true,
+    ["toml"] = true,
+    ["ts"] = true,
+    ["twig"] = true,
+    ["txt"] = true,
+    ["vala"] = true,
+    ["vb"] = true,
+    ["verilog"] = true,
+    ["vhdl"] = true,
+    ["vim"] = true,
+    ["vimscript"] = true,
+    ["webidl"] = true,
+    ["wiki"] = true,
+    ["xml"] = true,
+    ["xz"] = true,
+    ["yacc"] = true,
+    ["yaml"] = true,
+    ["zsh"] = true,
+}
+
+function is_valid_ext(ext)
+    return valid_exts[ext] ~= nil
+end
+
+
+
 -- Special keys:
 --  opts.search_dirs -- list of directory to search in
 files.live_grep = function(opts)
@@ -40,16 +179,38 @@ files.live_grep = function(opts)
     end
   end
 
+  print(opts.entry_maker)
   local live_grepper = finders.new_job(function(prompt)
       -- TODO: Probably could add some options for smart case and whatever else rg offers.
 
       if not prompt or prompt == "" then
         return nil
       end
+      local typ_arg
+      local raw_arg
 
-      prompt = escape_chars(prompt)
+      if string.match(prompt, ' %-%-') then
+          local typ = string.match(prompt, '%-%-type=(%w+)') 
+          if typ and is_valid_ext(typ) then
+              typ_arg = "--type " .. typ
+          end
 
-      return flatten { vimgrep_arguments, prompt, opts.search_dirs or '.' }
+          if string.match(prompt, ' %-%-raw') then
+              raw_arg = '-F'
+          end
+
+          prompt = string.gsub(prompt, ' %-%-.*$', '')
+      end
+
+
+      -- if raw_arg ~= nil then
+      -- prompt = escape_chars(prompt)
+      -- end
+
+      local res = flatten { vimgrep_arguments, typ_arg, raw_arg, '--', prompt, opts.search_dirs or '.' }
+
+      
+      return res
     end,
     opts.entry_maker or make_entry.gen_from_vimgrep(opts),
     opts.max_results,
